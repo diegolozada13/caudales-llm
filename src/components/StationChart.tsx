@@ -15,11 +15,19 @@ export function StationChart({ series, thresholds, predictionPoint }: StationCha
   const values = series.map((point) => point.valor);
   const predictionLabel = predictionPoint ? formatHour(predictionPoint.fechaHora) : undefined;
   const chartLabels = predictionLabel ? [...labels, predictionLabel] : labels;
-  const predictionSeriesData = predictionPoint ? [...values, null] : values;
   const predictionScatter = predictionPoint ? [[labels.length, predictionPoint.valor]] : [];
 
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  const range = Math.max(maxValue - minValue, 1);
+  const thresholdsToShow = [
+    { value: thresholds.bajo, name: "Bajo" },
+    { value: thresholds.medio, name: "Medio" },
+    { value: thresholds.alto, name: "Alto" },
+  ].filter((threshold) => threshold.value >= minValue - range * 0.2 && threshold.value <= maxValue + range * 0.2);
+
   const options = {
-    color: ["#2563EB", "#10B981", "#f59e0b"],
+    color: ["#2563EB", "#f59e0b", "#14b8a6"],
     tooltip: {
       trigger: "axis",
       formatter: (params: any) => {
@@ -55,26 +63,17 @@ export function StationChart({ series, thresholds, predictionPoint }: StationCha
         lineStyle: { width: 3, borderCap: "round" },
         areaStyle: { opacity: 0.08 },
         showSymbol: false,
-      },
-      {
-        name: "Umbrales",
-        type: "line",
-        data: Array(chartLabels.length).fill(thresholds.medio),
-        lineStyle: {
-          type: "dashed",
-          width: 1,
-          color: "#f59e0b",
-        },
-        symbol: "none",
-        markLine: {
-          silent: true,
-          data: [
-            { yAxis: thresholds.bajo, name: "Bajo", label: { formatter: "Bajo", position: "end" } },
-            { yAxis: thresholds.medio, name: "Medio", label: { formatter: "Medio", position: "end" } },
-            { yAxis: thresholds.alto, name: "Alto", label: { formatter: "Alto", position: "end" } },
-          ],
-          lineStyle: { type: "dotted", color: "#94a3b8" },
-        },
+        markLine: thresholdsToShow.length
+          ? {
+              silent: true,
+              data: thresholdsToShow.map((threshold) => ({
+                yAxis: threshold.value,
+                name: threshold.name,
+                label: { formatter: threshold.name, position: "end" },
+              })),
+              lineStyle: { type: "dotted", color: "#94a3b8" },
+            }
+          : undefined,
       },
       {
         name: "Predicción +1h",

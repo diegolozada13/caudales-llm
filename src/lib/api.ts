@@ -60,10 +60,43 @@ const parseDate = (dateStr: string | undefined): string => {
   }
 };
 
+const fetchAllPages = async <T>(url: string, params: Record<string, unknown> = {}): Promise<T[]> => {
+  const firstResponse = await saihClient.get<SAIHResponse<T>>(url, {
+    params: {
+      ...params,
+      pagina: 0,
+    },
+  });
+
+  const firstPageData = firstResponse.data?.data || [];
+  const totalPages = firstResponse.data?.meta?.totalPaginas ?? 1;
+
+  if (totalPages <= 1) {
+    return firstPageData;
+  }
+
+  const pageRequests = [];
+  for (let page = 1; page < totalPages; page += 1) {
+    pageRequests.push(
+      saihClient.get<SAIHResponse<T>>(url, {
+        params: {
+          ...params,
+          pagina: page,
+        },
+      }),
+    );
+  }
+
+  const pageResponses = await Promise.all(pageRequests);
+  return pageResponses.reduce<T[]>(
+    (acc, response) => [...acc, ...(response.data?.data || [])],
+    firstPageData,
+  );
+};
+
 export const getCaudales = async (): Promise<StationVariable[]> => {
   try {
-    const response = await saihClient.get<SAIHResponse<SAIHCaudal>>("caudales");
-    const caudales = response.data?.data || [];
+    const caudales = await fetchAllPages<SAIHCaudal>("caudales");
 
     return caudales.map((caudal) => ({
       idVariable: caudal.idVariable || "",
@@ -103,14 +136,11 @@ export const getVariableValores = async (
   fechaFin: string,
 ): Promise<HistoryPoint[]> => {
   try {
-    const response = await saihClient.get<SAIHResponse<SAIHValor>>("variables/" + idVariable + "/valores", {
-      params: {
-        fechaIni,
-        fechaFin,
-      },
+    const valores = await fetchAllPages<SAIHValor>(`variables/${idVariable}/valores`, {
+      fechaIni,
+      fechaFin,
     });
 
-    const valores = response.data?.data || [];
     return valores
       .map((valor) => ({
         fechaHora: parseDate(valor.fechaHora),
