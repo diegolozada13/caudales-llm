@@ -65,7 +65,7 @@ export function StationChart({ series, thresholds, predictionPoint }: StationCha
       type: "value",
       axisLine: { lineStyle: { color: "#cbd5e1" } },
       splitLine: { lineStyle: { color: "#e2e8f0", type: "dashed" } },
-      axisLabel: { color: "#64748b", formatter: "{value} m³/s" },
+      axisLabel: { color: "#64748b", fontSize: 10, formatter: "{value} m³/s" },
     },
     series: [
       {
@@ -89,7 +89,7 @@ export function StationChart({ series, thresholds, predictionPoint }: StationCha
           : undefined,
       },
       {
-        name: "Predicción +1h",
+        name: "Predicción",
         type: "scatter",
         data: predictionScatter,
         symbolSize: 12,

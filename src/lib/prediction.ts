@@ -5,6 +5,7 @@ export interface PredictionResult {
   tendencia: "sube" | "está estable" | "baja";
   riesgo: "bajo" | "medio" | "alto";
   fechaPrediccion: string;
+  horasAdelante: number;
 }
 
 const getLastPoints = (values: HistoryPoint[], count = 4): HistoryPoint[] =>
@@ -25,6 +26,7 @@ export const linearPrediction = (
       tendencia: "está estable",
       riesgo: "bajo",
       fechaPrediccion: new Date().toISOString(),
+      horasAdelante,
     };
   }
 
@@ -49,6 +51,7 @@ export const linearPrediction = (
     tendencia,
     riesgo,
     fechaPrediccion,
+    horasAdelante,
   };
 };
 

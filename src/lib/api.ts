@@ -60,9 +60,8 @@ const parseDate = (dateStr: string | undefined): string => {
   }
 };
 
-const buildLocalDateTime = (date: Date): string => {
-  const pad = (value: number) => value.toString().padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+const buildUtcIsoDateTime = (date: Date): string => {
+  return date.toISOString().split(".")[0] + "Z";
 };
 
 const fetchAllPages = async <T>(url: string, params: Record<string, unknown> = {}): Promise<T[]> => {
@@ -170,8 +169,8 @@ export const getStationVariableById = async (idVariable: string): Promise<Statio
 
     const valores24h = await getVariableValores(
       idVariable,
-      buildLocalDateTime(oneDayAgo),
-      buildLocalDateTime(now),
+      buildUtcIsoDateTime(oneDayAgo),
+      buildUtcIsoDateTime(now),
     ).catch(() => []);
 
     return {
@@ -191,8 +190,8 @@ export const get24hValues = async (idVariable: string): Promise<HistoryPoint[]> 
 
     return await getVariableValores(
       idVariable,
-      buildLocalDateTime(oneDayAgo),
-      buildLocalDateTime(now),
+      buildUtcIsoDateTime(oneDayAgo),
+      buildUtcIsoDateTime(now),
     );
   } catch (error) {
     console.error(`Error fetching 24h values for ${idVariable}:`, error);

@@ -36,8 +36,8 @@ export default function StationDetailPage({ params }: PageProps) {
     const start = new Date(`${startDateTime}:00`);
     const end = new Date(`${endDateTime}:00`);
     return {
-      fechaIni: start.toISOString(),
-      fechaFin: end.toISOString(),
+      fechaIni: start.toISOString().split(".")[0] + "Z",
+      fechaFin: end.toISOString().split(".")[0] + "Z",
     };
   };
 
@@ -118,10 +118,10 @@ export default function StationDetailPage({ params }: PageProps) {
 
   const estado = calculateEstado(station.valorActual, station.umbrales);
   const dataToUse = history.length > 0 ? history : station.valores24h;
-  const prediction = linearPrediction(dataToUse, station.umbrales);
+  const predictions = [1, 4, 24].map((hours) => linearPrediction(dataToUse, station.umbrales, hours));
   const predictionPoint = {
-    fechaHora: prediction.fechaPrediccion,
-    valor: prediction.valorEstimado,
+    fechaHora: predictions[0].fechaPrediccion,
+    valor: predictions[0].valorEstimado,
   };
 
   const handleLoadSelectedRange = async () => {
@@ -209,12 +209,12 @@ export default function StationDetailPage({ params }: PageProps) {
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[1.4fr_0.6fr]">
-          <StationChart series={dataToUse} thresholds={station.umbrales} predictionPoint={predictionPoint} />
-
           <div className="space-y-6">
-            <PredictionPanel prediction={prediction} />
-            <LLMExplanation />
+            <StationChart series={dataToUse} thresholds={station.umbrales} predictionPoint={predictionPoint} />
+            <LLMExplanation station={station} predictions={predictions} />
           </div>
+
+          <PredictionPanel predictions={predictions} />
         </section>
       </div>
     </main>
