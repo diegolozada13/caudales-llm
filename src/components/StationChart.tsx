@@ -31,8 +31,21 @@ export function StationChart({ series, thresholds, predictionPoint }: StationCha
     tooltip: {
       trigger: "axis",
       formatter: (params: any) => {
-        const item = params[0];
-        return `${item.axisValue}<br />${item.seriesName}: ${item.data} m³/s`;
+        if (!Array.isArray(params)) {
+          return "";
+        }
+
+        const validItems = params.filter((item: any) => item.data !== null && item.data !== undefined);
+        if (validItems.length === 0) {
+          return params[0]?.axisValue ?? "";
+        }
+
+        return validItems
+          .map((item: any) => {
+            const value = Array.isArray(item.value) ? item.value[item.value.length - 1] : item.value;
+            return `${item.axisValue}<br />${item.seriesName}: ${value} m³/s`;
+          })
+          .join("<br />");
       },
     },
     grid: {
@@ -93,7 +106,7 @@ export function StationChart({ series, thresholds, predictionPoint }: StationCha
           <h3 className="text-lg font-semibold text-slate-900">Tendencia de caudal</h3>
         </div>
       </div>
-      <EChartsReact option={options} style={{ width: "100%", height: "100%" }} />
+      <EChartsReact option={options} style={{ width: "100%", height: "80%"}} />
     </div>
   );
 }

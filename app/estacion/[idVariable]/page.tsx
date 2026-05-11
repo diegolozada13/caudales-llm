@@ -17,21 +17,39 @@ export default function StationDetailPage({ params }: PageProps) {
   const resolvedParams = use(params);
   const [station, setStation] = useState<StationVariable | null>(null);
   const [history, setHistory] = useState<HistoryPoint[]>([]);
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const now = new Date();
+  const defaultEnd = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+  const defaultStart = new Date(now.getTime() - 24 * 60 * 60 * 1000 - now.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+  const [selectedStart, setSelectedStart] = useState(defaultStart);
+  const [selectedEnd, setSelectedEnd] = useState(defaultEnd);
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const buildDateRange = (date: string) => {
-    const start = new Date(`${date}T00:00:00Z`);
-    const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
-    return { fechaIni: start.toISOString(), fechaFin: end.toISOString() };
+  const maxRangeMs = 48 * 60 * 60 * 1000;
+
+  const buildDateRange = (startDateTime: string, endDateTime: string) => {
+    const start = new Date(`${startDateTime}:00`);
+    const end = new Date(`${endDateTime}:00`);
+    return {
+      fechaIni: start.toISOString(),
+      fechaFin: end.toISOString(),
+    };
   };
 
-  const loadHistory = async (idVariable: string, date: string) => {
+  const rangeStart = new Date(`${selectedStart}:00`);
+  const rangeEnd = new Date(`${selectedEnd}:00`);
+  const rangeDuration = rangeEnd.getTime() - rangeStart.getTime();
+  const isRangeValid = rangeDuration > 0 && rangeDuration <= maxRangeMs;
+
+  const loadHistory = async (idVariable: string, startDateTime: string, endDateTime: string) => {
     try {
       setHistoryLoading(true);
-      const { fechaIni, fechaFin } = buildDateRange(date);
+      const { fechaIni, fechaFin } = buildDateRange(startDateTime, endDateTime);
       const values = await getVariableValores(idVariable, fechaIni, fechaFin);
       setHistory(values);
     } catch (err) {
@@ -106,8 +124,8 @@ export default function StationDetailPage({ params }: PageProps) {
     valor: prediction.valorEstimado,
   };
 
-  const handleLoadSelectedDay = async () => {
-    await loadHistory(resolvedParams.idVariable, selectedDate);
+  const handleLoadSelectedRange = async () => {
+    await loadHistory(resolvedParams.idVariable, selectedStart, selectedEnd);
   };
 
   return (
@@ -122,32 +140,6 @@ export default function StationDetailPage({ params }: PageProps) {
             </div>
             <div className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold ${estadoColor(estado)}`}>
               Estado: {estado}
-            </div>
-          </div>
-          <div className="mt-8 flex flex-col gap-4 rounded-3xl bg-slate-50 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-900">Mostrar 24h de día concreto</p>
-              <p className="text-sm text-slate-600">Por defecto se muestran las últimas 24 horas.</p>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <label htmlFor="selected-day" className="sr-only">
-                Seleccionar día
-              </label>
-              <input
-                id="selected-day"
-                type="date"
-                value={selectedDate}
-                onChange={(event) => setSelectedDate(event.target.value)}
-                className="rounded-3xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
-              />
-              <button
-                type="button"
-                onClick={handleLoadSelectedDay}
-                disabled={historyLoading}
-                className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {historyLoading ? "Cargando..." : "Cargar día"}
-              </button>
             </div>
           </div>
 
@@ -166,6 +158,54 @@ export default function StationDetailPage({ params }: PageProps) {
               <p className="mt-2 text-sm text-slate-600">{formatDateTime(station.fechaHora)}</p>
             </div>
           </div>
+        </section>
+
+        <section className="mb-6 rounded-4xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Visualización de hasta 48 horas</p>
+              <p className="text-sm text-slate-600">Selecciona fecha y hora de inicio y fin. El rango máximo es de 48 horas.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
+              <div className="grid gap-1">
+                <label htmlFor="selected-start" className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Inicio
+                </label>
+                <input
+                  id="selected-start"
+                  type="datetime-local"
+                  value={selectedStart}
+                  onChange={(event) => setSelectedStart(event.target.value)}
+                  className="rounded-3xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+                />
+              </div>
+              <div className="grid gap-1">
+                <label htmlFor="selected-end" className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Fin
+                </label>
+                <input
+                  id="selected-end"
+                  type="datetime-local"
+                  value={selectedEnd}
+                  onChange={(event) => setSelectedEnd(event.target.value)}
+                  className="rounded-3xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+                />
+              </div>
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={handleLoadSelectedRange}
+                  disabled={historyLoading || !isRangeValid}
+                  className="inline-flex min-w-[10rem] items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {historyLoading ? "Cargando..." : "Cargar rango"}
+                </button>
+              </div>
+            </div>
+          </div>
+          {!isRangeValid ? (
+            <p className="mt-3 text-sm text-amber-700">El rango debe ser mayor a 0 y no exceder 48 horas.</p>
+          ) : null}
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[1.4fr_0.6fr]">

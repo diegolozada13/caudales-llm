@@ -60,6 +60,11 @@ const parseDate = (dateStr: string | undefined): string => {
   }
 };
 
+const buildLocalDateTime = (date: Date): string => {
+  const pad = (value: number) => value.toString().padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+};
+
 const fetchAllPages = async <T>(url: string, params: Record<string, unknown> = {}): Promise<T[]> => {
   const firstResponse = await saihClient.get<SAIHResponse<T>>(url, {
     params: {
@@ -165,8 +170,8 @@ export const getStationVariableById = async (idVariable: string): Promise<Statio
 
     const valores24h = await getVariableValores(
       idVariable,
-      oneDayAgo.toISOString().split(".")[0] + "Z",
-      now.toISOString().split(".")[0] + "Z",
+      buildLocalDateTime(oneDayAgo),
+      buildLocalDateTime(now),
     ).catch(() => []);
 
     return {
@@ -186,8 +191,8 @@ export const get24hValues = async (idVariable: string): Promise<HistoryPoint[]> 
 
     return await getVariableValores(
       idVariable,
-      oneDayAgo.toISOString().split(".")[0] + "Z",
-      now.toISOString().split(".")[0] + "Z",
+      buildLocalDateTime(oneDayAgo),
+      buildLocalDateTime(now),
     );
   } catch (error) {
     console.error(`Error fetching 24h values for ${idVariable}:`, error);
