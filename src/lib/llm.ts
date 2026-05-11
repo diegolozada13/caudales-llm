@@ -85,3 +85,4 @@ export const explainWithLLM = async (
 
   return completion.choices?.[0]?.message?.content?.trim() ?? "No se obtuvo respuesta del modelo.";
 };
+

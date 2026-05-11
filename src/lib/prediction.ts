@@ -30,6 +30,7 @@ export const linearPrediction = (
       riesgo: "bajo",
       fechaPrediccion: new Date().toISOString(),
       horasAdelante,
+      modelo: "lineal",
     };
   }
 
@@ -55,6 +56,7 @@ export const linearPrediction = (
     riesgo,
     fechaPrediccion,
     horasAdelante,
+    modelo: "lineal",
   };
 };
 
@@ -160,4 +162,59 @@ export const ruleBasedPrediction = (
     horasAdelante,
     modelo: "reglas-simples",
   };
+};
+
+export const llmPrediction = async (
+  values: HistoryPoint[],
+  umbrales: Umbrales,
+  horasAdelante = 1,
+): Promise<PredictionResult> => {
+  const ultimo = values[values.length - 1];
+
+  if (!ultimo) {
+    return {
+      valorEstimado: values[values.length - 1]?.valor ?? 0,
+      tendencia: "está estable",
+      riesgo: "bajo",
+      fechaPrediccion: new Date().toISOString(),
+      horasAdelante,
+      modelo: "llm",
+    };
+  }
+
+  try {
+    const response = await fetch("/api/llm/predict", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ values, umbrales, horasAdelante }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Error en API de predicción LLM");
+    }
+
+    const data = await response.json();
+    const valorEstimado = data.valorEstimado;
+
+    // Calcular tendencia comparando con el último valor
+    const tendencia = valorEstimado > ultimo.valor + 0.5 ? "sube" : valorEstimado < ultimo.valor - 0.5 ? "baja" : "está estable";
+
+    const riesgo = valorEstimado > umbrales.alto ? "alto" : valorEstimado > umbrales.medio ? "medio" : "bajo";
+
+    const fechaPrediccion = new Date(new Date(ultimo.fechaHora).getTime() + horasAdelante * 60 * 60 * 1000).toISOString();
+
+    return {
+      valorEstimado: Number(valorEstimado.toFixed(1)),
+      tendencia,
+      riesgo,
+      fechaPrediccion,
+      horasAdelante,
+      modelo: "llm",
+    };
+  } catch (error) {
+    // Fallback a lineal si falla LLM
+    return linearPrediction(values, umbrales, horasAdelante);
+  }
 };
