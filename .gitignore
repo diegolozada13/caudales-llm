@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# experiment outputs
+/experiments-results/
+
 # production
 /build
 

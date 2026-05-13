@@ -1,12 +1,21 @@
 import type { HistoryPoint, Umbrales } from "@/src/lib/mock-data";
 
+export type PredictionModelId = "lineal" | "promedio-movil" | "reglas-simples" | "llm";
+
+export const predictionModelOptions: { id: PredictionModelId; label: string; description: string }[] = [
+  { id: "lineal", label: "Lineal", description: "Determinista y rápido." },
+  { id: "promedio-movil", label: "Promedio móvil", description: "Suaviza cambios recientes usando deltas promedio." },
+  { id: "reglas-simples", label: "Reglas simples", description: "Heurístico basado en los últimos cambios." },
+  { id: "llm", label: "LLM (experimental)", description: "Predicción con modelo de lenguaje (más lento/variable)." },
+];
+
 export interface PredictionResult {
   valorEstimado: number;
   tendencia: "sube" | "está estable" | "baja";
   riesgo: "bajo" | "medio" | "alto";
   fechaPrediccion: string;
   horasAdelante: number;
-  modelo?: string; // Nuevo: identificar el modelo usado
+  modelo?: PredictionModelId;
 }
 
 const getLastPoints = (values: HistoryPoint[], count = 4): HistoryPoint[] =>

@@ -6,7 +6,14 @@ import { PredictionPanel } from "@/src/components/PredictionPanel";
 import { LLMExplanation } from "@/src/components/LLMExplanation";
 import { getStationVariableById, getVariableValores } from "@/src/lib/api";
 import { calculateEstado, formatDateTime, formatNumber, estadoColor } from "@/src/lib/utils";
-import { linearPrediction } from "@/src/lib/prediction";
+import {
+  linearPrediction,
+  movingAveragePrediction,
+  ruleBasedPrediction,
+  llmPrediction,
+  type PredictionModelId,
+  type PredictionResult,
+} from "@/src/lib/prediction";
 import type { StationVariable, HistoryPoint } from "@/src/lib/mock-data";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -19,6 +26,10 @@ export default function StationDetailPage({ params }: PageProps) {
   const resolvedParams = use(params);
   const [station, setStation] = useState<StationVariable | null>(null);
   const [history, setHistory] = useState<HistoryPoint[]>([]);
+  const [predictionModel, setPredictionModel] = useState<PredictionModelId>("lineal");
+  const [predictions, setPredictions] = useState<PredictionResult[]>([]);
+  const [predictionsLoading, setPredictionsLoading] = useState(false);
+  const [predictionsError, setPredictionsError] = useState<string | null>(null);
   const now = new Date();
   const defaultEnd = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
     .toISOString()
@@ -89,6 +100,55 @@ export default function StationDetailPage({ params }: PageProps) {
     loadStation();
   }, [resolvedParams.idVariable]);
 
+  useEffect(() => {
+    if (!station) return;
+
+    let cancelled = false;
+    const dataToUse = history.length > 0 ? history : station.valores24h;
+    const hours = [1, 4, 24];
+
+    const deterministicPrediction = (horasAdelante: number): PredictionResult => {
+      if (predictionModel === "lineal") {
+        return linearPrediction(dataToUse, station.umbrales, horasAdelante);
+      }
+      if (predictionModel === "promedio-movil") {
+        return movingAveragePrediction(dataToUse, station.umbrales, horasAdelante);
+      }
+      return ruleBasedPrediction(dataToUse, station.umbrales, horasAdelante);
+    };
+
+    const run = async () => {
+      setPredictionsError(null);
+
+      if (predictionModel !== "llm") {
+        setPredictionsLoading(false);
+        setPredictions(hours.map((h) => deterministicPrediction(h)));
+        return;
+      }
+
+      setPredictions([]);
+      setPredictionsLoading(true);
+
+      try {
+        const next = await Promise.all(hours.map((h) => llmPrediction(dataToUse, station.umbrales, h)));
+        if (cancelled) return;
+        setPredictions(next);
+      } catch (err) {
+        if (cancelled) return;
+        setPredictionsError(err instanceof Error ? err.message : "Error desconocido");
+        setPredictions(hours.map((h) => linearPrediction(dataToUse, station.umbrales, h)));
+      } finally {
+        if (!cancelled) setPredictionsLoading(false);
+      }
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [station, history, predictionModel]);
+
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 px-4 pt-10 pb-24 sm:px-6 lg:px-8">
@@ -120,11 +180,12 @@ export default function StationDetailPage({ params }: PageProps) {
 
   const estado = calculateEstado(station.valorActual, station.umbrales);
   const dataToUse = history.length > 0 ? history : station.valores24h;
-  const predictions = [1, 4, 24].map((hours) => linearPrediction(dataToUse, station.umbrales, hours));
-  const predictionPoint = {
-    fechaHora: predictions[0].fechaPrediccion,
-    valor: predictions[0].valorEstimado,
-  };
+  const predictionPoint = predictions[0]
+    ? {
+        fechaHora: predictions[0].fechaPrediccion,
+        valor: predictions[0].valorEstimado,
+      }
+    : undefined;
 
   const handleLoadSelectedRange = async () => {
     await loadHistory(resolvedParams.idVariable, selectedStart, selectedEnd);
@@ -222,7 +283,13 @@ export default function StationDetailPage({ params }: PageProps) {
             <LLMExplanation station={station} predictions={predictions} />
           </div>
 
-          <PredictionPanel predictions={predictions} />
+          <PredictionPanel
+            predictions={predictions}
+            selectedModel={predictionModel}
+            onSelectedModelChange={setPredictionModel}
+            loading={predictionsLoading}
+            error={predictionsError}
+          />
         </section>
       </div>
     </main>

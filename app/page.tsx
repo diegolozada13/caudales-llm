@@ -58,11 +58,19 @@ export default function HomePage() {
                 Explora las estaciones, busca por nombre, subcuenca o población y accede al análisis detallado de cada variable.
               </p>
             </div>
-            {!loading && (
-              <div className="rounded-3xl bg-slate-50 px-5 py-4 text-sm text-slate-700 shadow-inner">
-                {filteredStations.length} estación{filteredStations.length === 1 ? "" : "es"} encontradas
-              </div>
-            )}
+            <div className="flex flex-col gap-2 sm:items-end">
+              <a
+                href="/experimentos"
+                className="rounded-3xl bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 transition-colors"
+              >
+                🧪 Experimentos LLMs
+              </a>
+              {!loading && (
+                <div className="rounded-3xl bg-slate-50 px-5 py-4 text-sm text-slate-700 shadow-inner">
+                  {filteredStations.length} estación{filteredStations.length === 1 ? "" : "es"} encontradas
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="mt-8">
