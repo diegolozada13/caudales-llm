@@ -6,7 +6,7 @@ export const predictionModelOptions: { id: PredictionModelId; label: string; des
   { id: "lineal", label: "Lineal", description: "Determinista y rápido." },
   { id: "promedio-movil", label: "Promedio móvil", description: "Suaviza cambios recientes usando deltas promedio." },
   { id: "reglas-simples", label: "Reglas simples", description: "Heurístico basado en los últimos cambios." },
-  { id: "llm", label: "LLM (experimental)", description: "Predicción con modelo de lenguaje (más lento/variable)." },
+  { id: "llm", label: "LLM", description: "Predicción con modelo de lenguaje (más lento/variable)." },
 ];
 
 export interface PredictionResult {
