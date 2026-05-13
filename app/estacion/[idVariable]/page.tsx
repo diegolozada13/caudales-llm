@@ -8,6 +8,8 @@ import { getStationVariableById, getVariableValores } from "@/src/lib/api";
 import { calculateEstado, formatDateTime, formatNumber, estadoColor } from "@/src/lib/utils";
 import { linearPrediction } from "@/src/lib/prediction";
 import type { StationVariable, HistoryPoint } from "@/src/lib/mock-data";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 interface PageProps {
   params: Promise<{ idVariable: string }>;
@@ -89,7 +91,7 @@ export default function StationDetailPage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50 px-4 py-10 sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-slate-50 px-4 pt-10 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="mb-8 h-40 rounded-4xl border border-slate-200 bg-white p-8 shadow-sm animate-pulse" />
           <div className="grid gap-6 xl:grid-cols-[1.4fr_0.6fr]">
@@ -106,7 +108,7 @@ export default function StationDetailPage({ params }: PageProps) {
 
   if (error || !station) {
     return (
-      <main className="min-h-screen bg-slate-50 px-4 py-10 sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-slate-50 px-4 pt-10 pb-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl rounded-4xl border border-slate-200 bg-white p-10 text-center shadow-sm">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Error</p>
           <h1 className="mt-4 text-3xl font-semibold text-slate-900">{error}</h1>
@@ -127,10 +129,16 @@ export default function StationDetailPage({ params }: PageProps) {
   const handleLoadSelectedRange = async () => {
     await loadHistory(resolvedParams.idVariable, selectedStart, selectedEnd);
   };
-
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-10 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-50 px-4 pt-10 pb-24 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
+        <Link 
+          href="/" 
+          className="inline-flex items-center gap-2 mb-6 text-slate-500 hover:text-slate-900 transition-colors font-medium text-sm"
+        >
+          <ArrowLeft size={16} />
+          Volver al cuadro de mando
+        </Link>
         <section className="mb-8 rounded-4xl border border-slate-200 bg-white p-8 shadow-sm">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
@@ -208,7 +216,7 @@ export default function StationDetailPage({ params }: PageProps) {
           ) : null}
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1.4fr_0.6fr]">
+        <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-6">
             <StationChart series={dataToUse} thresholds={station.umbrales} predictionPoint={predictionPoint} />
             <LLMExplanation station={station} predictions={predictions} />

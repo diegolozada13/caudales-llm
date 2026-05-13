@@ -102,13 +102,15 @@ export const getCaudales = async (): Promise<StationVariable[]> => {
   try {
     const caudales = await fetchAllPages<SAIHCaudal>("caudales");
 
-    return caudales.map((caudal) => ({
+    const stations: StationVariable[] = caudales.map((caudal) => ({
       idVariable: caudal.idVariable || "",
       nombreEstacion: caudal.nombreEstacion || "Estación sin nombre",
       nombreVariable: caudal.nombreVariable || "Variable sin nombre",
       subcuenca: caudal.subcuenca || "Subcuenca desconocida",
       provincia: caudal.provincia || "Provincia desconocida",
       poblacion: caudal.poblacion || "Población desconocida",
+      latitud: caudal.latitud ?? 0,
+      longitud: caudal.longitud ?? 0,
       valorActual: caudal.valor ?? 0,
       fechaHora: parseDate(caudal.fechaHora),
       umbrales: {
@@ -118,6 +120,8 @@ export const getCaudales = async (): Promise<StationVariable[]> => {
       },
       valores24h: [],
     }));
+    return stations;
+
   } catch (error) {
     console.error("Error fetching caudales:", error);
     throw error;

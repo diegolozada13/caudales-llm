@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: "Interfaz MVP para análisis de caudales SAIH con dashboard y detalle de estación.",
 };
 
+import { ChatBox } from "@/src/components/ChatBox";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,7 +29,10 @@ export default function RootLayout({
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-slate-50">{children}</body>
+      <body className="min-h-full flex flex-col bg-slate-50">
+        {children}
+        <ChatBox />
+      </body>
     </html>
   );
 }

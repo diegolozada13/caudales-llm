@@ -16,6 +16,8 @@ export interface StationVariable {
   subcuenca: string;
   provincia: string;
   poblacion: string;
+  latitud: number;
+  longitud: number;
   valorActual: number;
   fechaHora: string;
   umbrales: Umbrales;
@@ -42,6 +44,8 @@ export const stationVariables: StationVariable[] = [
     subcuenca: "Río Dulce",
     provincia: "Guadalajara",
     poblacion: "Sigüenza",
+    latitud: 40.6,
+    longitud: -3.1,
     valorActual: 28.4,
     fechaHora: "2026-05-08T22:00:00Z",
     umbrales: {
@@ -58,6 +62,8 @@ export const stationVariables: StationVariable[] = [
     subcuenca: "Tajo Alto",
     provincia: "Cuenca",
     poblacion: "Cañete",
+    latitud: 40.0,
+    longitud: -1.6,
     valorActual: 7.9,
     fechaHora: "2026-05-08T22:00:00Z",
     umbrales: {
@@ -74,6 +80,8 @@ export const stationVariables: StationVariable[] = [
     subcuenca: "Río Alberche",
     provincia: "Madrid",
     poblacion: "Aranjuez",
+    latitud: 40.0,
+    longitud: -3.6,
     valorActual: 19.6,
     fechaHora: "2026-05-08T22:00:00Z",
     umbrales: {

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { StationCard } from "@/src/components/StationCard";
+import { AlertsPanel } from "@/src/components/AlertsPanel";
 import { normalizeSearch } from "@/src/lib/utils";
 import type { StationVariable } from "@/src/lib/mock-data";
 import { getCaudales } from "@/src/lib/api";
@@ -45,8 +46,9 @@ export default function HomePage() {
   );
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-50 px-4 pt-8 pb-24 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
+        <AlertsPanel />
         <section className="mb-10 rounded-4xl border border-slate-200 bg-white p-8 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>

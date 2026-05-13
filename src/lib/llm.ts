@@ -8,9 +8,10 @@ const defaultOllamaModel = process.env.OLLAMA_MODEL || "llama2";
 const openaiModel = process.env.OPENAI_MODEL || "gpt-3.5-turbo";
 
 const buildPrompt = (
-  mode: "general" | "riesgo" | "prediccion",
+  mode: "general" | "riesgo" | "prediccion" | "sentinel",
   station: StationVariable,
-  predictions: PredictionResult[],
+  predictions: PredictionResult[] = [],
+  predictedRain: number = 0,
 ) => {
   const predictionText = predictions
     .map(
@@ -27,6 +28,11 @@ const buildPrompt = (
 
   if (mode === "riesgo") {
     return `${base} Explica el riesgo actual del caudal respecto a los umbrales, y qué debería vigilar el operador. Mantén la respuesta en español y en un párrafo corto.`;
+  }
+
+  if (mode === "sentinel") {
+    return `Estación: ${station.nombreEstacion}. Caudal: ${station.valorActual} m³/s. Umbral Alto: ${station.umbrales.alto}. Lluvia prevista (24h): ${predictedRain.toFixed(1)} mm. 
+Genera un resumen de riesgo breve (1-2 frases) en lenguaje natural. Sé directo y profesional. Responde en español.`;
   }
 
   return `${base} Explica la predicción +1h en detalle: qué significa para la tendencia y si el caudal va a subir, bajar o mantenerse. Responde en español de forma clara.`;
@@ -84,5 +90,45 @@ export const explainWithLLM = async (
   });
 
   return completion.choices?.[0]?.message?.content?.trim() ?? "No se obtuvo respuesta del modelo.";
+};
+
+export const getAIRiskSummary = async (
+  station: StationVariable,
+  predictedRain: number
+): Promise<string> => {
+  const prompt = buildPrompt("sentinel", station, [], predictedRain);
+  const provider = getLLMProvider();
+
+  if (provider === "ollama") {
+    const apiUrl = getOllamaUrl();
+    const payload = {
+      model: process.env.OLLAMA_MODEL || defaultOllamaModel,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3,
+    };
+
+    try {
+      const response = await axios.post(`${apiUrl}/v1/chat/completions`, payload);
+      return response.data.choices?.[0]?.message?.content?.trim() ?? "No se pudo generar el resumen.";
+    } catch (error) {
+      return "Error al conectar con Ollama.";
+    }
+  }
+
+  const client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    baseURL: process.env.OPENAI_API_BASE_URL,
+  });
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: openaiModel,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3,
+    });
+    return completion.choices?.[0]?.message?.content?.trim() ?? "No se pudo generar el resumen.";
+  } catch (error) {
+    return "Error al conectar con OpenAI.";
+  }
 };
 
