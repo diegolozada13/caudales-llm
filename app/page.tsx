@@ -67,7 +67,7 @@ export default function HomePage() {
               </a>
               {!loading && (
                 <div className="rounded-3xl bg-slate-50 px-5 py-4 text-sm text-slate-700 shadow-inner">
-                  {filteredStations.length} estación{filteredStations.length === 1 ? "" : "es"} encontradas
+                  {filteredStations.length} estacion{filteredStations.length === 1 ? "" : "es"} encontradas
                 </div>
               )}
             </div>
